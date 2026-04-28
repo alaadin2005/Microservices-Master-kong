@@ -1,0 +1,21 @@
+{
+    "collection": "@nestjs/schematics",
+    "sourceRoot": "src",
+    "compilerOptions": {
+        "plugins": ["@nestjs/swagger"],
+        "assets": [
+            {
+                "include": "languages/**/*",
+                "outDir": "dist",
+                "watchAssets": false
+            },
+            {
+                "include": "protos/**/*",
+                "outDir": "dist",
+                "watchAssets": false
+            }
+        ],
+        "deleteOutDir": true,
+        "watchAssets": false
+    }
+}

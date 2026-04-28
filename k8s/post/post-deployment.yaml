@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: post-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: post-service
+  template:
+    metadata:
+      labels:
+        app: post-service
+    spec:
+      containers:
+      - name: post-service
+        image: 3booda24/post-services:v1
+        ports:
+        - containerPort: 9002
+        - containerPort: 50052
+
+        envFrom:
+        - configMapRef:
+            name: post-config
+        - secretRef:
+            name: post-secret
+
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            echo "Waiting for DB...";
+            sleep 4;
+            yarn prisma migrate deploy;
+            echo "Starting Post Service...";
+            yarn start;
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 9002
+          initialDelaySeconds: 10
+          periodSeconds: 10
+
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 9002
+          initialDelaySeconds: 5
+          periodSeconds: 5
+

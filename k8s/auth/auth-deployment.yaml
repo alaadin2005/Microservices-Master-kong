@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+        - name: auth-service
+          image: 3booda24/bw-auth-service:v1
+          imagePullPolicy: Always
+
+          envFrom:
+            - configMapRef:
+                name: auth-config
+            - secretRef:
+                name: auth-secret
+
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for PostgreSQL..."
+              until nc -z postgres 5432; do
+                echo "Postgres not ready... retrying in 2s"
+                sleep 2
+              done
+              
+              echo "DB Ready ✔"
+              echo "Running Prisma Migrations..."
+              yarn prisma migrate deploy
+
+              echo "Starting Auth Service..."
+              yarn start
+
+          ports:
+            - containerPort: 9001
+            - containerPort: 50051
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 9001
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 9001
+            initialDelaySeconds: 10
+            periodSeconds: 15
+

@@ -1,0 +1,69 @@
+_format_version: "3.0"
+_transform: true
+
+services:
+  - name: auth-service
+    url: http://auth-service:9001
+    routes:
+      - name: auth-routes
+        paths:
+          - /auth
+        strip_path: true
+        preserve_host: false
+        protocols:
+          - http
+          - https
+        methods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+
+  - name: post-service
+    url: http://post-service:9002
+    routes:
+      - name: post-routes
+        paths:
+          - /post
+        strip_path: true
+        preserve_host: false
+        protocols:
+          - http
+          - https
+        methods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+
+plugins:
+  - name: rate-limiting
+    route: auth-routes
+    config:
+      minute: 100
+      hour: 1000
+      day: 10000
+      policy: local
+      hide_client_headers: false
+      fault_tolerant: true
+
+  - name: rate-limiting
+    route: post-routes
+    config:
+      minute: 200
+      hour: 2000
+      day: 20000
+      policy: local
+      hide_client_headers: false
+      fault_tolerant: true
+
+  - name: rate-limiting
+    config:
+      minute: 300
+      hour: 3000
+      day: 30000
+      policy: local
+      hide_client_headers: false
+      fault_tolerant: true

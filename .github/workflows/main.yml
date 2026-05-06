@@ -1,1 +1,35 @@
+name: Build & Push All Services
 
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        service: [app, web, db]
+
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & Push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./Docker-files/${{ matrix.service }}
+          push: true
+          tags: |
+            ${{ env.DOCKERHUB_USERNAME }}/vprofile-${{ matrix.service }}:latest
+            ${{ env.DOCKERHUB_USERNAME }}/vprofile-${{ matrix.service }}:${{ github.sha }}

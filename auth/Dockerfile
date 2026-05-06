@@ -1,72 +1,76 @@
-# =========================
-# 1. BASE IMAGE (STABLE)
-# =========================
-FROM node:22-bullseye AS base
+# -----------------
+#   BASE IMAGE  
+# -----------------
+    # Multi-stage build for optimal image size
+    FROM node:22.21.1-alpine AS base
 
-WORKDIR /app
+RUN apk add --no-cache libc6-compat wget openssl
 
-# System dependencies (Prisma + SSL + grpc support)
-RUN apt-get update && apt-get install -y \
-    openssl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Disable git hooks (important for Docker)
-ENV HUSKY=0
-ENV NODE_ENV=production
-
-# =========================
-# 2. DEPENDENCIES STAGE
-# =========================
+# ---------------------
+#   Dependencies  IMAGE  
+# ---------------------
+# Install dependencies only when needed
 FROM base AS deps
 
 WORKDIR /app
 
-COPY package.json yarn.lock ./
+# Copy package files
+COPY package.json yarn.lock* ./
 COPY prisma ./prisma/
 
-# Install dependencies safely (no scripts)
-RUN yarn install --frozen-lockfile
 
-# =========================
-# 3. BUILD STAGE
-# =========================
+# Install dependencies
+RUN yarn install --frozen-lockfile --production=false
+
+
+
+
+
+# -----------------
+#   Builder IMAGE  
+# -----------------
+# Build the source code
 FROM base AS builder
 
 WORKDIR /app
-
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+RUN ulimit -n 65536
 
-RUN chmod +x node_modules/.bin/prisma && \
-    node node_modules/.bin/prisma generate
-
-RUN yarn run proto:generate
+# Generate Prisma client and build application
+RUN yarn prisma:generate
+RUN yarn proto:generate
 RUN yarn build
 
-# =========================
-# 4. RUNTIME STAGE
-# =========================
-FROM node:22-bullseye AS runner
+
+
+
+# -------------------------------------
+# Production runner (smallest possible)
+# -------------------------------------
+# Production image, copy all the files and run the app
+FROM base AS runner
 
 WORKDIR /app
 
-ENV NODE_ENV=production
+# Create non-root user for security
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nestjs
 
-# Create non-root user (security best practice)
-RUN useradd -m appuser
-
-# Copy only required artifacts
+# Copy necessary files from builder stage
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/src/protos ./src/protos
 COPY --from=builder /app/package.json ./package.json
+
+# Copy node_modules from deps stage (production only)
 COPY --from=deps /app/node_modules ./node_modules
 
-# Fix permissions
-RUN chown -R appuser:appuser /app
-USER appuser
+# Change ownership to nestjs user
+RUN chown -R nestjs:nodejs /app
+USER nestjs
 
-# Expose service port
-EXPOSE 9001
+# Expose ports for HTTP and gRPC
+EXPOSE 9001 50051
 
-# Start app
-CMD ["node", "dist/main.js"]
+CMD ["yarn", "start"]

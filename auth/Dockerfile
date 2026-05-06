@@ -28,6 +28,6 @@ COPY . .
 
 ENV PRISMA_CLI_QUERY_ENGINE_TYPE=binary
 
-RUN npx prisma generate
+RUN node node_modules/.bin/prisma generate
 RUN yarn proto:generate
 RUN yarn build

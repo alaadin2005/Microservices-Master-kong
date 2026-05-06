@@ -6,6 +6,16 @@
         "node": ">=18.0.0",
         "npm": ">=9.0.0"
     },
+
+    {
+  "scripts": {
+    "prisma:generate": "node node_modules/prisma/build/index.js generate",
+    "proto:generate": "node node_modules/@grpc/proto-loader/proto-loader-gen-types.js --outDir=./src/protos --keepCase --longs=String --enums=String --defaults --oneofs ./src/protos/*.proto",
+    "build": "node node_modules/@nestjs/cli/bin/nest.js build",
+    "start": "node dist/main.js"
+  }
+}
+
     "scripts": {
         "prebuild": "rimraf dist",
         "build": "nest build",

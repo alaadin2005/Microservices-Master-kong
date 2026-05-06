@@ -4,10 +4,6 @@ on:
   push:
     branches: [ "main" ]
 
-env:
-  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-  REGISTRY: docker.io
-  
 jobs:
   build:
     runs-on: ubuntu-latest

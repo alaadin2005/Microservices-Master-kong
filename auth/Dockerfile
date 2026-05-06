@@ -29,12 +29,20 @@ FROM base AS builder
 
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
+
+# Fix permissions for all executables in node_modules
+RUN chmod -R +x node_modules/.bin
+
 COPY . .
 RUN ulimit -n 65536
 
-# Generate Prisma client and build application
-RUN npx dotenv -e .env.docker -- prisma generate
+# Generate Prisma client directly (without dotenv)
+RUN yarn prisma generate
+
+# Run proto generation
 RUN yarn proto:generate
+
+# Build the application
 RUN yarn build
 
 # -------------------------------------

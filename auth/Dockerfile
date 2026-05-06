@@ -25,7 +25,7 @@ COPY package.json yarn.lock ./
 COPY prisma ./prisma/
 
 # Install dependencies safely (no scripts)
-RUN yarn install --frozen-lockfile --ignore-scripts
+RUN yarn install --frozen-lockfile
 
 # =========================
 # 3. BUILD STAGE
@@ -34,18 +34,13 @@ FROM base AS builder
 
 WORKDIR /app
 
-ENV HUSKY=0
-
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generate Prisma client safely
-RUN npx prisma generate
+RUN chmod +x node_modules/.bin/prisma && \
+    node node_modules/.bin/prisma generate
 
-# Generate protobuf files
 RUN yarn run proto:generate
-
-# Build NestJS app
 RUN yarn build
 
 # =========================

@@ -1,3 +1,24 @@
+FROM node:22-alpine AS base
+
+WORKDIR /app
+
+RUN apk add --no-cache libc6-compat openssl
+
+# ---------------------
+# deps
+# ---------------------
+FROM base AS deps
+
+WORKDIR /app
+
+COPY package.json yarn.lock ./
+COPY prisma ./prisma/
+
+RUN yarn install --frozen-lockfile
+
+# ---------------------
+# builder
+# ---------------------
 FROM base AS builder
 
 WORKDIR /app
@@ -5,15 +26,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Fix Prisma on Alpine
 ENV PRISMA_CLI_QUERY_ENGINE_TYPE=binary
 
-# Optional debug
-RUN ls -la node_modules/.bin/
-
-# Generate Prisma client
 RUN npx prisma generate
-
-# Continue build
 RUN yarn proto:generate
 RUN yarn build

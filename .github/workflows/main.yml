@@ -26,8 +26,9 @@ jobs:
     # 🐳 Build AUTH
     - name: Build & Push Auth
       run: |
-        docker build -f auth/Dockerfile -t $IMAGE_AUTH:${{ github.sha }} ./auth
-        docker push $IMAGE_AUTH:${{ github.sha }}
+        docker build -f auth/Dockerfile \
+          -t your-dockerhub-username/auth:${{ github.sha }} \
+          ./auth
 
     # 🐳 Build POST
     - name: Build & Push Post

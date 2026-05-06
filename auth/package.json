@@ -16,7 +16,7 @@
         "lint": "eslint \"{src,test}/**/*.ts\" --fix",
         "test": "jest --config test/jest.json --runInBand",
         "proto:generate": "npx nestjs-grpc generate --proto ./src/protos --output ./src/generated",
-        "prisma:generate": "dotenv -e .env.docker -- prisma generate",
+        "prisma:generate": "npx dotenv -e .env.docker -- prisma generate",
         "prisma:migrate": "dotenv -e .env.docker -- prisma migrate dev",
         "prisma:migrate:prod": "dotenv -e .env.docker -- prisma migrate deploy",
         "prisma:studio": "dotenv -e .env.docker -- prisma studio",
